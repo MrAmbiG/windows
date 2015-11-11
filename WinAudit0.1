@@ -10,7 +10,7 @@
     Prerequisite   : PowerShell v4+ over windows.
     Copyright      - None
     0.0            : hostname,fqdn,domain,dns,timezone,ip,subnet,gateway,OS,description,storage,cpu,ram,applications,
-    0.1            : odbc
+    0.1            : odbc, windows & SQL activation
 .LINK
     Script posted over: https://github.com/gajuambi/windows
     
@@ -44,6 +44,7 @@ ac $winaudit '<table border="1px" width="100%" bgcolor="white" cellspacing="0" c
 ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">Name</font></th>'
 ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">Domain</font></th>'
 ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">OperatingSystem</font></th>'
+ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">activation</font></th>'
 ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">Architecture</font></th>'
 ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">Build</font></th>'
 ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">Description</font></th>'
@@ -56,6 +57,7 @@ ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verd
 $Name            = $env:computername
 $Domain          = $env:userdnsdomain
 $OperatingSystem = (gwmi Win32_OperatingSystem).Caption
+$activation      = (Get-CimInstance -ClassName SoftwareLicensingProduct | where ApplicationId -EQ 55c92734-d682-4d71-983e-d6ec3f16059f | where PartialProductKey).LicenseStatus
 $Architecture    = (gwmi Win32_OperatingSystem).OSArchitecture
 $Build           = (gwmi Win32_OperatingSystem).BuildNumber
 $Description     = (gwmi Win32_OperatingSystem).Description
@@ -79,6 +81,10 @@ ac $winaudit "</TD>"
 
 ac $winaudit "<TD style='border:1px solid black' align=left>"
 ac $winaudit "<p><font color='#196aa5'>$OperatingSystem</font></p>"
+ac $winaudit "</TD>"
+
+ac $winaudit "<TD style='border:1px solid black' align=left>"
+ac $winaudit "<p><font color='#196aa5'>$activation</font></p>"
 ac $winaudit "</TD>"
 
 ac $winaudit "<TD style='border:1px solid black' align=left>"
@@ -327,6 +333,59 @@ ac $winaudit "<br><br>"
 
 if ((get-odbcdsn) -eq $null) {
 ac $winaudit '<table style="border:1px solid black" width=100% bgcolor="#00518c" cellspacing="0" cellpadding="0"><tr><td><font face="Bookman,Palatino,Century Gothic,Verdana,Tahoma" size="3" color="white"><p><b><i>Section 4 : No ODBC<i></b></p></font></td></tr></table>'
+ac $winaudit "<br><br>"
+}
+
+
+############################
+#Section 
+Write-Host "Checking : SQL"
+$instance = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').((get-itemproperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server').InstalledInstances)
+
+if ($instance -ne $null) {
+ac $winaudit '<table style="border:1px solid black" width=100% bgcolor="#00518c" cellspacing="0" cellpadding="0"><tr><td><font face="Bookman,Palatino,Century Gothic,Verdana,Tahoma" size="3" color="white"><p><b>Section : SQL</b></p></font></td></tr></table>'
+#main table
+ac $winaudit '<table style="border:1px solid black" width="100%" bgcolor="#e1e1e1" cellspacing="0" cellpadding="0"<TR><TD>'
+#subtable
+ac $winaudit '<table border="1px" width="100%" bgcolor="white" cellspacing="0" cellpadding="0">'
+#colors from http://www.color-hex.com/
+ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">Computer</font></th>'
+ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">Edition</font></th>'
+ac $winaudit '<th style="border:1px solid black"><font face="Century Gothic,Verdana,Tahoma" color="black">Version</font></th>'
+
+$Computer = $env:computername
+$Edition  = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$instance\Setup").Edition
+$Version  = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$instance\Setup").Version
+
+write-host "collecting information about SQL in $netbios" -foregroundcolor green
+
+#start of a new row
+ac $winaudit "<TR>"
+
+ac $winaudit "<TD style='border:1px solid black' align=left>"
+ac $winaudit "<p><font color='#196aa5'>$Computer</font></p>"    
+ac $winaudit "</TD>"                                        
+                                                            
+ac $winaudit "<TD style='border:1px solid black' align=left >"
+ac $winaudit "<p><font color='#196aa5'>$Edition</font></p>"
+ac $winaudit "</TD>"                                        
+                                                            
+ac $winaudit "<TD style='border:1px solid black' align=left >"
+ac $winaudit "<p><font color='#196aa5'>$Version</font></p>"
+ac $winaudit "</TD>"
+
+#end of row
+ac $winaudit "</TR>"
+
+#Ending & fixing the position of the table
+ac $winaudit "</TD></TR></table>"
+ac $winaudit "</table><P>"
+ac $winaudit "<br><br>"
+}
+
+if ($instance -EQ $null) {
+ac $winaudit '<table style="border:1px solid black" width=100% bgcolor="#00518c" cellspacing="0" cellpadding="0"><tr><td><font face="Bookman,Palatino,Century Gothic,Verdana,Tahoma" size="3" color="white"><p><b>No SQL Database found</b></p></font></td></tr></table>'
+ac $winaudit "<br><br>"
 }
 
 #open the report
