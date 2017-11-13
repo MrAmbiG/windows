@@ -22,7 +22,7 @@ populate the values,
 save & close the file,
 Hit Enter to proceed
 " -ForegroundColor Blue -BackgroundColor White
-$csv = "$PSScriptRoot/HostVds.csv"
+$csv = "$PSScriptRoot/dnsEntries.csv"
 get-process | Select-Object netbiosName,ip,zone | Export-Csv -Path $csv -Encoding ASCII -NoTypeInformation
 Start-Process $csv
 Read-Host "Hit Enter/Return to proceed"
